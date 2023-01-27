@@ -11,7 +11,11 @@ const error = (message) => {
 };
 
 const sendMessage = (message, origin) => {
-     
+     for (const socket of connections.keys()){
+        if (socket !== origin) {
+            socket.write(message);
+        }
+     }
 };
 
 const listen = (port) => {
@@ -29,10 +33,14 @@ const listen = (port) => {
                 connections.set(socket, message);
             }
             else if (message === END) {
+                connections.delete(socket);
                 socket.end();
             }
             else {
-                console.log(`${remoteSocket} -> ${message}`);
+                
+                const fullMessage = `[${connections.get(socket)}]: ${message} `
+                console.log(`${remoteSocket} -> ${fullMessage}`);
+                sendMessage(fullMessage, socket);
             }
         });
 

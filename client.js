@@ -38,7 +38,7 @@ const connect = (host, port) => {
             console.log(data);
         });
     });
-    
+
 
     socket.on("error", (err) => error(err.message));
     socket.on("close", () => process.exit(0));
