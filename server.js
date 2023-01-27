@@ -2,6 +2,7 @@ const { Server } = require('net');
 
 const host = "0.0.0.0";
 const END = 'END';
+const ERR = 'ERR';
 
 const connections = new Map();
 
@@ -18,6 +19,15 @@ const sendMessage = (message, origin) => {
      }
 };
 
+const isValidName = (username) => {
+    for(const socket of connections.keys()){
+      if(connections.get(socket) === username){
+        return false;
+      }
+    }
+    return true;
+  }
+
 const listen = (port) => {
     const server = new Server();
 
@@ -29,15 +39,21 @@ const listen = (port) => {
 
         socket.on("data", (message) => {
             if (!connections.has(socket)) {
-                console.log(`Username ${message} set for connection ${remoteSocket}`)
-                connections.set(socket, message);
+                if (!isValidName(message)) {
+                    socket.write(ERR);
+                }
+                else {
+                    console.log(`Username ${message} set for connection ${remoteSocket}`)
+                    connections.set(socket, message);
+                
+                }
             }
+                
             else if (message === END) {
                 connections.delete(socket);
                 socket.end();
             }
             else {
-                
                 const fullMessage = `[${connections.get(socket)}]: ${message} `
                 console.log(`${remoteSocket} -> ${fullMessage}`);
                 sendMessage(fullMessage, socket);
@@ -50,8 +66,9 @@ const listen = (port) => {
             console.log(`Connection with ${remoteSocket} closed`);
         });
     });
+
     
-    server.listen({ port, host }, () => {
+    server.listen({ port: port, host: '0.0.0.0' }, () => {
         console.log("Listening on port 8000");
     });
 

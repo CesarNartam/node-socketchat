@@ -11,20 +11,24 @@ const error = (message) => {
     process.exit(1);
 };
 
+const chooseName = (socket) => {
+    readline.question('Choose your username: ', (username) => {
+      socket.write(username);
+      console.log(`Type any message to send it, type ${END} to exit`)
+    });
+  }
+
 const connect = (host, port) => {
     console.log(`Connecting to ${host}:${port}`);
     
     const socket = new Socket();
-    socket.connect({ host, port });
+    socket.connect({ host: host, port: port });
     socket.setEncoding('utf-8');
     
     socket.on("connect", () => {
         console.log('Connected');
 
-        readline.question("Choose your username: ", (username) => {
-            socket.write(username);
-            console.log(`Type any message to send a message, type ${END} to finish your session`);
-        })
+        chooseName(socket);
 
         readline.on("line", (message) => {
             socket.write(message);
@@ -35,7 +39,14 @@ const connect = (host, port) => {
     
         });
         socket.on("data", (data) => {
-            console.log(data);
+            if (data === 'ERR') {
+                console.log('This username exists already');
+                chooseName(socket);
+            }
+            else {
+                console.log(data);
+            }
+            
         });
     });
 
